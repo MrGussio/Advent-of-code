@@ -1,4 +1,4 @@
-package nl.jellehulter.aoc;
+package nl.jellehulter.aoc.day1;
 
 import java.io.File;
 import java.io.FileNotFoundException;
