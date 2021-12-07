@@ -43,7 +43,7 @@ public class Day7 {
     public void part1() {
         int currentBest = -1;
         int fuelBest = Integer.MAX_VALUE;
-        for(Integer i : integers) {
+        for(int i = minimum; i <= this.maximum; i++) {
             int fuel = 0;
             for(Integer j : integers) {
                 fuel += Math.abs(i - j);
