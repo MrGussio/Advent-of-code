@@ -1,7 +1,5 @@
 package nl.jellehulter.aoc.day9;
 
-import nl.jellehulter.aoc.day8.Day8;
-
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,25 +31,35 @@ public class Day9 {
         System.out.println(sum);
     }
 
+    public void part2() {
+        final List<Point> lowPoints = getLowPoints();
+        int[] basins = lowPoints.stream().map(this::getBasinSize).sorted(Comparator.reverseOrder()).limit(3).mapToInt(i -> i).toArray();
+        System.out.println(Arrays.stream(basins).reduce(1, (x, y) -> x * y));
+    }
+
+    /**
+     * Returns a list of all the low points in the current grid
+     * @return List of all lowest points.
+     */
     public List<Point> getLowPoints() {
         List<Point> response = new ArrayList<>();
         for (int y = 0; y < y_size; y++) {
             for (int x = 0; x < x_size; x++) {
                 int value = grid[y][x];
-                if (x > 0 && grid[y][x - 1] <= value)
-                    continue;
-                if (x < x_size - 1 && grid[y][x + 1] <= value)
-                    continue;
-                if (y > 0 && grid[y - 1][x] <= value)
-                    continue;
-                if (y < y_size - 1 && grid[y + 1][x] <= value)
-                    continue;
-                response.add(new Point(x, y));
+                Point p = new Point(x, y);
+                if (getNeighbours(p).stream().allMatch(point -> grid[point.y][point.x] > value)) {
+                    response.add(p);
+                }
             }
         }
         return response;
     }
 
+    /**
+     * Gets all the neighbours of a certain node
+     * @param center The center node to get the neighbours of
+     * @return The neighbours of the center node
+     */
     public List<Point> getNeighbours(Point center) {
         List<Point> neighbours = new ArrayList<>();
         if (center.x > 0) {
@@ -69,6 +77,11 @@ public class Day9 {
         return neighbours;
     }
 
+    /**
+     * Returns the size of the basin a low point is in
+     * @param lowPoint The low point to calculate the basin size of
+     * @return The basin size
+     */
     public int getBasinSize(Point lowPoint) {
         final List<Point> basin = new ArrayList<>();
         final Stack<Point> newPoints = new Stack<>();
@@ -78,22 +91,15 @@ public class Day9 {
             final Point current = newPoints.pop();
             int currentValue = grid[current.y][current.x];
             List<Point> neighbours = getNeighbours(current);
-            for(final Point neighbour : neighbours) {
+            for (final Point neighbour : neighbours) {
                 int value = grid[neighbour.y][neighbour.x];
-                if(value != 9 && value > currentValue && basin.stream().noneMatch(neighbour::equals)) {
+                if (value != 9 && value > currentValue && basin.stream().noneMatch(neighbour::equals)) {
                     newPoints.add(neighbour);
                     basin.add(neighbour);
                 }
             }
-        } while(newPoints.size() > 0);
+        } while (newPoints.size() > 0);
         return basin.size();
-    }
-
-    public void part2() {
-        final List<Point> lowPoints = getLowPoints();
-        int[] basins = lowPoints.stream().mapToInt(this::getBasinSize).sorted().toArray();
-//        Arrays.stream(basins).
-        System.out.println(basins[basins.length - 1] * basins[basins.length - 2] * basins[basins.length - 3]);
     }
 
     public static void main(String[] args) throws FileNotFoundException {
