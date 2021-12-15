@@ -61,50 +61,28 @@ public class Day15 {
     }
 
     public void part1() {
-        int goal = SIZE * SIZE - 1;
-        HashMap<Integer, Integer> distances = new HashMap<>();
-        HashMap<Integer, Integer> prev = new HashMap<>();
-        Set<Integer> visited = new HashSet<>();
-        for (int i = 0; i < grid.length; i++) {
-            distances.put(i, Integer.MAX_VALUE);
-        }
-        distances.put(0, grid[0]);
-        while (true) {
-            int p = distances.entrySet().stream()
-                    .filter(e -> !visited.contains(e.getKey()))
-                    .filter(e -> e.getValue() != Integer.MAX_VALUE)
-                    .min(Map.Entry.comparingByValue()).orElseThrow().getKey();
-            visited.add(p);
-            if (p == goal) {
-                break;
-            }
-            List<Integer> neighbors = getNeighbours(p).stream().filter(i -> !visited.contains(i)).collect(Collectors.toList());
-            for (Integer neighbor : neighbors) {
-                int cost = distances.get(p) + grid[neighbor];
-                if (cost < distances.get(neighbor)) {
-                    distances.put(neighbor, cost);
-                    prev.put(neighbor, p);
+        int[] distances = new int[SIZE*SIZE];
+        Arrays.fill(distances,  1000000);
+        distances[0] = grid[0];
+        int[] lastDistances = distances.clone();
+        do {
+            lastDistances = distances.clone();
+            for (int i = 0; i < grid.length; i++) {
+                List<Integer> neighbours = getNeighbours(i);
+                int min = 1000000;
+                for (Integer neighbor : neighbours) {
+                    min = Math.min(min, distances[neighbor]);
                 }
+                distances[i] = Math.min(grid[i] + min, distances[i]);
             }
-        }
-        Stack<Integer> path = new Stack<>();
-        int u = goal;
-        int cost = 0;
-        while (true) {
-            path.push(u);
-            cost += grid[u];
-            if (!prev.containsKey(u)) {
-                break;
-            }
-            u = prev.get(u);
-        }
-        System.out.println(cost - grid[0]);
+        } while(!Arrays.equals(distances, lastDistances));
+        System.out.println(lastDistances[SIZE*SIZE-1] - grid[0]);
     }
 
     public static void main(String[] args) throws FileNotFoundException {
         Day15 day15 = new Day15();
         day15.readFile();
-//        day15.readFilePart2();
+        day15.readFilePart2();
         long start = System.currentTimeMillis();
         day15.part1();
         System.out.println(System.currentTimeMillis() - start);
