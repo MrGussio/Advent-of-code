@@ -18,7 +18,7 @@ public class Day17 {
                 int vx = vxStart;
                 int vy = vyStart;
                 long currentMaxY = 0;
-                for(int t = 0; t < 5000; t++) { //Continue as long as x is before the end of the target and has velocity
+                for(int t = 0; t < 5000; t++) {
                     x += vx;
                     y += vy;
                     if(vx > 0) vx --;
