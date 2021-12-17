@@ -28,7 +28,7 @@ public class Day17 {
                     if(x >= 70 && x <= 125 && y >= -159 && y <= -121) {
                         differentVelocities++;
                         if(currentMaxY > maxY) {
-                            System.out.println("New maxY " + maxY + " for ("+vxStart + "," + vyStart + ")");
+                            System.out.println("New maxY " + currentMaxY + " for ("+vxStart + "," + vyStart + ")");
                         }
                         maxY = Math.max(maxY, currentMaxY);
                         continue outer;
