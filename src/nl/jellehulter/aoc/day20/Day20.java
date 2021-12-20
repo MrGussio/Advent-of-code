@@ -78,26 +78,6 @@ public class Day20 {
     public void part1(int iterations) {
         for(int i = 0; i < iterations; i++) {
             int margin = 3;
-//            if(isInifinitelyLit) {
-//                for(int y = minY - margin; y < minY; y++) {
-//                    for(int x = minX - margin; x < minX; x++) {
-//                        points.add(new Point(x, y));
-//                    }
-//                    for(int x = maxX + 1; x < maxX + margin; x++) {
-//                        points.add(new Point(x, y));
-//                    }
-//                }
-//
-//                for(int y = maxY + 1; y < maxY + margin; y++) {
-//                    for(int x = minX - margin; x < minX; x++) {
-//                        points.add(new Point(x, y));
-//                    }
-//                    for(int x = maxX + 1; x < maxX + margin; x++) {
-//                        points.add(new Point(x, y));
-//                    }
-//                }
-//            }
-
             Set<Point> newPoints = new HashSet<>();
             for (int y = minY - margin; y <= maxY + margin; y++) {
                 for (int x = minX - margin; x <= maxX + margin; x++) {
