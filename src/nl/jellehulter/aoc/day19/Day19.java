@@ -40,18 +40,34 @@ public class Day19 {
             return this;
         }
 
+        /**
+         * Rotate over the X-axis
+         * @return Copy of this point but then rotated over the X-axis
+         */
         public Point rotateX() {
             return new Point(x, -z, y);
         }
 
+        /**
+         * Rotate over the Y-axis
+         * @return Copy of this point but then rotated over the Y-axis
+         */
         public Point rotateY() {
             return new Point(z, y, -x);
         }
 
+        /**
+         * Rotate over the Z-axis
+         * @return Copy of this point but then rotated over the Z-axis
+         */
         public Point rotateZ() {
             return new Point(-y, x, z);
         }
 
+        /**
+         * Get all possible rotations and orientations of this Point
+         * @return List of all possible rotations and orientations
+         */
         public List<Point> getAllRotations() {
             List<Point> rotations = new ArrayList<>();
             Point current = this.copy();
@@ -165,12 +181,13 @@ public class Day19 {
 
     public void part1() {
         Set<Point> beacons;
-        Stack<Scanner> stack = new Stack<>();
-        Map<Scanner, Point> scannerLocations = new HashMap<>();
+        Stack<Scanner> stack = new Stack<>(); //Stack of scanners left to be scanned
+        Map<Scanner, Point> scannerLocations = new HashMap<>(); //Locations of all scanners
         stack.addAll(scanners);
-        Scanner perspective = stack.pop();
-        beacons = new HashSet<>(perspective.points);
+        Scanner perspective = stack.pop(); //The scanner which is going to be used as main perspective
+        beacons = new HashSet<>(perspective.points); //All unique beacons
         scannerLocations.put(perspective, new Point(0, 0, 0));
+
         stackLoop:
         while (!stack.isEmpty()) {
             for (Scanner scanner : stack) {
@@ -183,20 +200,24 @@ public class Day19 {
                             diffs.put(diff, diffs.getOrDefault(diff, 0) + 1);
                         }
                     }
+                    //If there are more than or equal to 12 distances between points between the perspective of the first scanner
+                    //the same, we know that this rotation/orientation is correct, hence translate the points and then add them
+                    //to the list of beacons.
+                    //Over time more perspectives get added, slowly expanding the entire grid.
                     if (diffs.values().stream().anyMatch(i -> i >= 12)) {
                         Point diff = diffs.entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue)).map(Map.Entry::getKey).orElseThrow();
                         beacons.addAll(rotation.points.stream().map(p -> p.copy().add(diff)).collect(Collectors.toList()));
                         stack.remove(scanner);
                         scannerLocations.put(scanner, diff);
                         System.out.println(diff);
-                        continue stackLoop;
+                        continue stackLoop;//Redo outer loop such that we do not get a ConcurrentModificationException
                     }
                 }
             }
         }
         System.out.println(beacons.size());
 
-        //Calculate Manhattan distance
+        //Calculate maximum Manhattan distance
         int max = 0;
         for(Point p1 : scannerLocations.values()) {
             for(Point p2 : scannerLocations.values()) {
