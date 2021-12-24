@@ -1,0 +1,7 @@
+add w 2
+add z 5
+add x -4
+mul z w
+add z x
+add y 7
+eq y z
