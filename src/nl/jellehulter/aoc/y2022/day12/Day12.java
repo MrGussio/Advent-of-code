@@ -11,7 +11,7 @@ public class Day12 {
 
     Node end;
 
-    class Node {
+    static class Node {
 
         Map<Node, Integer> neighbours = new HashMap<>();
         List<Node> path = new ArrayList<>();
@@ -72,8 +72,7 @@ public class Day12 {
 
 
     public void part1() throws FileNotFoundException {
-        Set<Node> graph = Arrays.stream(nodes).flatMap(Arrays::stream).collect(Collectors.toSet());
-        System.out.println(findShortestPath(graph, start, end).size());
+        System.out.println(findShortestPath(start, end).size());
     }
 
     public void part2() {
@@ -81,7 +80,7 @@ public class Day12 {
         int lowestValue = Integer.MAX_VALUE;
         for(Node n : graph.stream().filter(n -> n.value == 0).toList()) {
             resetGraph(graph);
-            int s = findShortestPath(graph, n, end).size();
+            int s = findShortestPath(n, end).size();
             //If the path is empty, that means that the path does not exist
             if(s > 0)
                 lowestValue = Math.min(lowestValue, s);
@@ -103,12 +102,11 @@ public class Day12 {
 
     /**
      * Find shortest path using Dijkstra
-     * @param graph Set of nodes
      * @param start Starting node
      * @param end Target node
      * @return The path from start to end.
      */
-    public List<Node> findShortestPath(Set<Node> graph, Node start, Node end) {
+    public List<Node> findShortestPath(Node start, Node end) {
         Set<Node> visited = new HashSet<>();
         Set<Node> unvisited = new HashSet<>();
 
@@ -116,7 +114,7 @@ public class Day12 {
         start.distance = 0;
 
         while(!unvisited.isEmpty()) {
-            Node n = unvisited.stream().sorted(Comparator.comparingInt(o -> o.distance)).findFirst().get();
+            Node n = unvisited.stream().min(Comparator.comparingInt(o -> o.distance)).get();
             unvisited.remove(n);
             for(Map.Entry<Node, Integer> neighbour : n.neighbours.entrySet()) {
                 Node neighbourNode = neighbour.getKey();
