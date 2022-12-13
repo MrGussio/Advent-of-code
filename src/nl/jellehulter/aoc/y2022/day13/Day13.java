@@ -45,11 +45,13 @@ public class Day13 {
     public Pair parse(String input) {
         Pair pair = new Pair();
         StringBuilder currentInput = new StringBuilder();
+        //Start at i=1 to skip the [ of the current list
         for(int i = 1; i < input.length(); i++) {
             switch(input.charAt(i)) {
                 case '[':
                     pair.contents.add(parse(input.substring(i, input.indexOf(']', i) + 1)));
                     i = input.indexOf(']', i) + 1;//Skip until after the first next closing bracket
+                //If we see a ',' or ']', we add the value to the pair as we have currently seen it
                 case ',':
                 case ']':
                     if(currentInput.length() > 0)
@@ -82,11 +84,11 @@ public class Day13 {
         while(i*2 < pairs.size()) {
             Pair pair1 = pairs.get(i*2);
             Pair pair2 = pairs.get(i*2 + 1);
-            System.out.println("Pair " + (i+1) + ":");
-            System.out.println(pair1);
-            System.out.println(pair2);
+//            System.out.println("Pair " + (i+1) + ":");
+//            System.out.println(pair1);
+//            System.out.println(pair2);
             int res = checkOrder(pair1, pair2);
-            System.out.println(res == 1 ? "Right order" : "Not right order");
+//            System.out.println(res == 1 ? "Right order" : "Not right order");
             if(res == 1) count+= (i+1);
             i++;
         }
@@ -101,9 +103,9 @@ public class Day13 {
         pairs.add(divide2);
 
         pairs.sort(Collections.reverseOrder(this::checkOrder));
-        for(Pair p : pairs) {
-            System.out.println(p);
-        }
+//        for(Pair p : pairs) {
+//            System.out.println(p);
+//        }
 
         System.out.println((pairs.indexOf(divide1) + 1) * (pairs.indexOf(divide2) + 1));
     }
@@ -132,6 +134,9 @@ public class Day13 {
                 return res;
             }
         }
+        //Check whether the right is smaller than the left in the case the for loop is never entered
+        //if the left list is empty.
+        //This was needed to cover the case [] [3]
         return Integer.compare(right.contents.size(), left.contents.size());
     }
 
