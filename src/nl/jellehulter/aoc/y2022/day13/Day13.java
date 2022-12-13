@@ -1,12 +1,12 @@
 package nl.jellehulter.aoc.y2022.day13;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Day13 {
 
@@ -42,24 +42,30 @@ public class Day13 {
         }
     }
 
-    public Pair parse(String input) {
+    public Pair parse(BufferedReader reader) throws IOException {
         Pair pair = new Pair();
         StringBuilder currentInput = new StringBuilder();
         //Start at i=1 to skip the [ of the current list
-        for(int i = 1; i < input.length(); i++) {
-            switch(input.charAt(i)) {
+        int i;
+        while((i = reader.read()) != -1) {
+            char c = (char) (i);
+            switch(c) {
                 case '[':
-                    pair.contents.add(parse(input.substring(i, input.indexOf(']', i) + 1)));
-                    i = input.indexOf(']', i) + 1;//Skip until after the first next closing bracket
-                //If we see a ',' or ']', we add the value to the pair as we have currently seen it
+                    pair.contents.add(parse(reader));
+                //If we see a ',' add the seen value to the pair if available
                 case ',':
-                case ']':
                     if(currentInput.length() > 0)
                         pair.contents.add(new Value(Integer.parseInt(currentInput.toString())));
                     currentInput = new StringBuilder();
                     break;
-                default://Must be integer
-                    currentInput.append(input.charAt(i));
+                //End this pair and add the seen value if available
+                case ']':
+                    if(currentInput.length() > 0)
+                        pair.contents.add(new Value(Integer.parseInt(currentInput.toString())));
+                    return pair;
+                //Must be integer
+                default:
+                    currentInput.append(c);
                     break;
             }
         }
@@ -68,13 +74,13 @@ public class Day13 {
 
     List<Pair> pairs;
 
-    public void readFile() throws FileNotFoundException {
+    public void readFile() throws IOException {
         Scanner scanner = new Scanner(new File("src/nl/jellehulter/aoc/y2022/day13/day13.txt"));
         pairs = new ArrayList<>();
         while(scanner.hasNextLine()) {
             String line = scanner.nextLine();
             if(line.equals("")) continue;
-            pairs.add(parse(line));
+            pairs.add((Pair) parse(new BufferedReader(new StringReader(line))).contents.get(0));
         }
     }
 
@@ -89,16 +95,16 @@ public class Day13 {
 //            System.out.println(pair2);
             int res = checkOrder(pair1, pair2);
 //            System.out.println(res == 1 ? "Right order" : "Not right order");
-            if(res == 1) count+= (i+1);
+            if(res == 1) count += i+1;
             i++;
         }
         System.out.println("Final score: " + count);
     }
 
-    public void part2() throws FileNotFoundException {
+    public void part2() throws IOException {
         List<Pair> pairs = new ArrayList<>(this.pairs);
-        Pair divide1 = parse("[[2]]");
-        Pair divide2 = parse("[[6]]");
+        Pair divide1 = parse(new BufferedReader(new StringReader("[[2]]")));
+        Pair divide2 = parse(new BufferedReader(new StringReader("[[6]]")));
         pairs.add(divide1);
         pairs.add(divide2);
 
@@ -138,10 +144,11 @@ public class Day13 {
         //if the left list is empty.
         //This was needed to cover the case [] [3]
         return Integer.compare(right.contents.size(), left.contents.size());
+//        return 0 <
     }
 
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException {
         Day13 day13 = new Day13();
         day13.readFile();
         day13.part1();
