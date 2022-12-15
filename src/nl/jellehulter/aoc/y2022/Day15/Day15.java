@@ -117,82 +117,7 @@ public class Day15 {
         }
     }
 
-    public void part1() throws FileNotFoundException {
-
-        for(Map.Entry<Point, Point> entry : sensorMap.entrySet()) {
-            Point sensor = entry.getKey();
-            Point beacon = entry.getValue();
-//            int distance = Math.abs(sensor.x - beacon.x) + Math.abs(sensor.y - beacon.y);
-//            for(int y = sensor.y - distance; y <= sensor.y + distance; y++) {
-//                for(int x = 0; x <= distance; x++) {
-//                    Point p = new Point(sensor.x+x, y);
-//                    if(!beacons.containsKey(p)) {
-//                        noBeacons.add(p);
-//                    }
-//                    Point p2 = new Point(sensor.x - x, y);
-//                    if(!beacons.containsKey(p)) {
-//                        noBeacons.add(p);
-//                    }
-//                }
-//            }
-//            for(int x = sensor.x - distance; x <= sensor.x + distance; x++) {
-//                for(int y = sensor.y - distance; y <= sensor.y + distance; y++) {
-//                    Point p = new Point(x, y);
-//                    if(!beacons.containsKey(p)) {
-//                        noBeacons.add(p);
-//                    }
-//                }
-//            }
-            int distance = Math.abs(sensor.x - beacon.x) + Math.abs(sensor.y - beacon.y);
-            Set<Point> vonNeumann = getManhattenPointsAtY(sensor, distance, DESIRED_Y);
-            for(Point p : vonNeumann) {
-                if(!beacons.contains(p)) {
-                    noBeacons.add(p);
-                }
-            }
-        }
-//        printVertical(noBeacons, 10);
-        System.out.println(noBeacons.stream().filter(point -> point.y == DESIRED_Y).count());
-    }
-
-    public void printVertical(Set<Point> noBeacons, int y) {
-        double minX = noBeacons.stream().filter(point -> point.y == y).mapToDouble(Point::getX).min().getAsDouble();
-        double maxX = noBeacons.stream().filter(point -> point.y == y).mapToDouble(Point::getX).max().getAsDouble();
-        for(int x = (int) minX; x <= maxX; x++) {
-            System.out.print(noBeacons.contains(new Point(x, y)) ? "#" : ".");
-        }
-        System.out.println();
-    }
-
-    public Set<Point> getManhattenPointsAtY(Point p, int distance, int y) {
-        Set<Point> points = new HashSet<>();
-        if(y >= p.y-distance && y <= p.y+distance) {
-            for(int x = p.x - distance; x <= p.x + distance; x++) {
-                int localDist = Math.abs(p.x - x) + Math.abs(p.y - y);
-                if(localDist <= distance) {
-                    Point q = new Point(x, y);
-                    points.add(q);
-                }
-            }
-        }
-        return points;
-    }
-
-    public Set<Point> getManhattenPoints(Point p, int distance) {
-        Set<Point> points = new HashSet<>();
-        for(int y = p.y - distance; y <= p.y + distance; y++) {
-            for(int x = p.x - distance; x <= p.x + distance; x++) {
-                int localDist = Math.abs(p.x - x) + Math.abs(p.y - y);
-                if(localDist <= distance) {
-                    Point q = new Point(x, y);
-                    points.add(q);
-                }
-            }
-        }
-        return points;
-    }
-
-    public void part2() {
+    public void solve() {
         Map<Integer, IntervalRange> intervalsPerY = new HashMap<>();
 
         sensorMap.values().stream().distinct().forEach(p -> {
@@ -204,17 +129,10 @@ public class Day15 {
             Point sensor = entry.getKey();
             Point beacon = entry.getValue();
             int distance = Math.abs(sensor.x - beacon.x) + Math.abs(sensor.y - beacon.y);
-//            for(int y = 0; y <= distance; y++) {
-//                IntervalRange intervals = intervalsPerY.getOrDefault(sensor.y + y, new IntervalRange());
-//                Interval interval = new Interval(sensor.x - (distance - y), sensor.x + (distance - y));
-//                intervals.add(interval);
-//                intervalsPerY.put(sensor.y + y, intervals);
-//
-//                intervals = intervalsPerY.getOrDefault(sensor.y - y, new IntervalRange());
-//                intervals.add(new Interval(sensor.x - (distance - y), sensor.x + (distance - y)));
-//                intervalsPerY.put(sensor.y - y, intervals);
-//            }
             for(int y = Math.max(MIN_Y, sensor.y - distance); y <= Math.min(MAX_Y, sensor.y + distance); y++) {
+                //The width of the interval at this height, seen from the center.
+                //E.g., a width of 0 is an interval of (x,x), a width of 1 is (x-1,x+1)
+                //Take the absolute so that it reverts at the level of the sensor (e.g., the maximum width)
                 int width = distance - Math.abs(y-sensor.y);
                 Interval interval = new Interval(sensor.x - width, sensor.x + width);
                 IntervalRange intervalRange = intervalsPerY.getOrDefault(y, new IntervalRange());
@@ -222,16 +140,11 @@ public class Day15 {
                 intervalsPerY.put(y, intervalRange);
             }
         }
-
-//        List<Interval> desired = intervalsPerY.get(DESIRED_Y);
-//        desired.sort((i1, i2) -> (i1.a != i2.a) ? Integer.compare(i1.a, i2.a) : Integer.compare(i1.b, i2.b));
-//        //reduce intervals where applicable
-//        desired.stream().di
-
+        //Determine the length of the intervals at the DESIRED_Y, and subtract any beacons which might be on that row.
         int part1 = intervalsPerY.get(DESIRED_Y).length() - (int) beacons.stream().filter(p -> p.y == DESIRED_Y).count();
         System.out.println(part1);
 
-
+        //Check where there is an interval range which is not entirely closed (e.g., more than 1 interval in its set)
         Map.Entry<Integer, IntervalRange> intervalPerYEntry = intervalsPerY.entrySet().stream().filter(entry -> entry.getValue().intervals.size() == 2)
                 .findFirst()
                 .orElseThrow();
@@ -239,20 +152,11 @@ public class Day15 {
 
         long part2 = 4000000L * (distressIntervals.get(0).b + 1) + intervalPerYEntry.getKey();
         System.out.println(part2);
-
-        for(Map.Entry<Integer, IntervalRange> entry : intervalsPerY.entrySet()) {
-            if(entry.getValue().intervals.size() >= 2) {
-                System.out.print(entry.getKey() + " ");
-                System.out.println(entry.getValue().intervals);
-//                int part2 =
-            }
-        }
     }
 
     public static void main(String[] args) throws FileNotFoundException {
         Day15 day15 = new Day15();
-//        day15.part1();
         day15.readFile();
-        day15.part2();
+        day15.solve();
     }
 }
