@@ -12,10 +12,6 @@ public class Day17 {
 
         protected Set<Point> points;
 
-        private Shape() {
-            this(new HashSet<>());
-        }
-
         private Shape(Set<Point> points) {
             this.points = points;
         }
@@ -26,22 +22,6 @@ public class Day17 {
                 newPoints.add(new Point(p.x + dx, p.y + dy));
             }
             return new Shape(newPoints);
-        }
-
-        public void left() {
-            translate(-1, 0);
-        }
-
-        public void right() {
-            translate(-1, 0);
-        }
-
-        public void down() {
-            translate(0, -1);
-        }
-
-        public Set<Point> getPoints() {
-            return new TreeSet<>(points);
         }
 
         public static Shape minus(int y) {
@@ -94,13 +74,44 @@ public class Day17 {
         }
     }
 
-    public static int MAX_X = 6;
+    class State {
 
-    enum Move {
-        LEFT,
-        RIGHT,
-        DOWN
+        final int pattern;
+        final int rockType;
+        final int pointsHashcode;
+
+        public State(int pattern, int rockType, int pointsHashcode) {
+            this.pattern = pattern;
+            this.rockType = rockType;
+            this.pointsHashcode = pointsHashcode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            State state = (State) o;
+            return pattern == state.pattern && pointsHashcode == state.pointsHashcode;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(pattern, pointsHashcode);
+        }
     }
+
+    class Value {
+
+        final long i;
+        final long value;
+
+        public Value(long i, long value) {
+            this.i = i;
+            this.value = value;
+        }
+    }
+
+    public static int MAX_X = 6;
 
     public boolean collides(Set<Point> grid, Shape s) {
         if(s.points.stream().filter(p -> p.x < 0 || p.y < 0 || p.x > MAX_X).count() > 0)
@@ -115,15 +126,8 @@ public class Day17 {
         final String pattern = s.nextLine();
         Set<Point> grid = new HashSet<>();
         long steps = 0;
-        long total = 0;
-        for(long i = 999999999196L; i < 1000000000000L; i++) {
+        for(long i = 0; i < 2022; i++) {
             int highestPoint = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(-1) + 4;
-//            if(i % pattern.length() == 0) {
-//                int part1 = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(0) + 1;
-//                System.out.println(1000000000000L/pattern.length() * (total + part1));
-//                System.out.println(i);
-//                System.out.println(grid.size());
-//            }
             Shape shape = switch((int) (i % 5L)) {
                 case 0: yield Shape.minus(highestPoint);
                 case 1: yield Shape.plus(highestPoint);
@@ -141,56 +145,100 @@ public class Day17 {
                     shape = translated;
                 }
                 steps++;
-//                printGrid(grid, shape);
 
                 translated = shape.translate(0, -1);
                 if(collides(grid, translated)) {
                     grid.addAll(shape.points);
-                    int increasedHeight =  removeFloors(shape, grid);
-                    total += increasedHeight;
-                    if(increasedHeight > 0) {
-                        if((i%5) == 4 && (steps % pattern.length() == 690))
-                            System.out.println(total + "," + (steps % pattern.length()) + "," + (i%5) + "," + steps + "," + i);
-                        if(steps % pattern.length() == 0) {
-                            System.out.println("END");
-                            return;
-                        }
-                    }
-//                    printGrid(grid, null);
                     break;
                 }
                 shape = translated;
-//                printGrid(grid, shape);
-            }
-
-            if(steps % pattern.length() == 0) {
-                printGrid(grid, null);
-                System.out.println();
             }
 
         }
         int part1 = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(0) + 1;
-        System.out.println(total + part1);
+        System.out.println(part1);
     }
 
-    public int removeFloors(Shape s, Set<Point> grid) {
-        int minY = s.points.stream().mapToInt(p -> p.y).min().orElse(0);
-        int maxY = s.points.stream().mapToInt(p -> p.y).max().orElse(0);
-        for(int y = maxY; y >= minY; y--) {
-            int finalY = y;
-            if(grid.stream().filter(p -> p.y == finalY).count() == 7) {
-//                printGrid(grid, null);
-                Set<Point> toBeRemoved = grid.stream().filter(p -> p.y <= finalY).collect(Collectors.toSet());
-                grid.removeAll(toBeRemoved);
-                final Set<Point> translatedPoints = new HashSet<>();
-                grid.stream().filter(p -> p.y > finalY).forEach(p -> { p.translate(0, -finalY - 1); translatedPoints.add(p); });
-                grid.clear();
-                grid.addAll(translatedPoints);
-//                printGrid(grid, null);
-                return finalY + 1;
+    public void part2() throws FileNotFoundException {
+        Scanner s = new Scanner(new File("src/nl/jellehulter/aoc/y2022/day17/day17.txt"));
+        final String pattern = s.nextLine();
+        Set<Point> grid = new HashSet<>();
+        Map<Long, Long> remainders = new HashMap<>();
+        Map<State, Value> seenPatterns = new HashMap<>();
+        long steps = 0;
+        for(long i = 0; i < 2022; i++) {
+            int highestPoint = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(-1) + 4;
+            Shape shape = switch((int) (i % 5L)) {
+                case 0: yield Shape.minus(highestPoint);
+                case 1: yield Shape.plus(highestPoint);
+                case 2: yield Shape.l(highestPoint);
+                case 3: yield Shape.pipe(highestPoint);
+                case 4: yield Shape.square(highestPoint);
+                default:
+                    throw new IllegalStateException("Unexpected value: " + i % 5L);
+            };
+
+            while(true) {
+                int dx = pattern.charAt((int) (steps % pattern.length())) == '<' ? -1 : 1;
+                Shape translated = shape.translate(dx, 0);
+                if(!collides(grid, translated)) {
+                    shape = translated;
+                }
+                steps++;
+
+                translated = shape.translate(0, -1);
+                if(collides(grid, translated)) {
+                    grid.addAll(shape.points);
+                    break;
+                }
+                shape = translated;
             }
+
+            //Get the new highest point after adding the current shape to the grid
+            long newHighestPoint = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(-1) + 4;
+
+            //Retrieve all points at the 20 highest y-values and hash this set to save it's current state with respect to
+            //where in the pattern we currently are and which block we have just added.
+            Set<Point> top20 = normalize(grid.stream().filter(p -> p.y >= newHighestPoint - 20).collect(Collectors.toSet()));
+            State currentState = new State((int) (steps % pattern.length()), (int) (i%5), top20.hashCode());
+            remainders.put(i, newHighestPoint);
+            //If we have seen this pattern before, apply this pattern repetitively
+            if(seenPatterns.containsKey(currentState)) {
+                Value v = seenPatterns.get(currentState);
+                long valueDifference = newHighestPoint - v.value; //Difference in height since seeing the pattern before
+                long blockDifference = i - v.i;//Amount of blocks added since seeing the previous pattern occurance
+                long repetitionsNeeded = (1000000000000L-i-1)/blockDifference; //Amount of repetitions possible until a trillion
+                long remainder = (1000000000000L-i-1)%blockDifference;//Remainig steps left
+
+                //Get the increase of height of the remainder steps of the pattern
+                long remainderIncrease = remainders.get((remainder + v.i)) - (int) v.value;
+
+                //Result = height until now + (repititionsNeeded * valueDifference) + the remaining increase
+                System.out.println(highestPoint + repetitionsNeeded * valueDifference + remainderIncrease);
+                return;
+            }
+            //Put the pattern in the seen patterns and let's wait until we see a match.
+            seenPatterns.put(currentState, new Value(i, newHighestPoint));
+
         }
-        return 0;
+        int part1 = grid.stream().max(Comparator.comparingInt(p -> p.y)).map(p -> p.y).orElse(0) + 1;
+        System.out.println(part1);
+    }
+
+    /**
+     * Normalizes the set of points by moving the lowest point in the set to y=0
+     * @param points The set of points to be normalized
+     * @return A new Set with clones of the points but then normalized
+     */
+    public Set<Point> normalize(Set<Point> points) {
+        int lowest = points.stream().mapToInt(p -> p.y).min().orElse(0);
+        if(lowest == 0)
+            return points;
+        Set<Point> result = new HashSet<>();
+        for(Point p : points) {
+            result.add(new Point(p.x, p.y - lowest));
+        }
+        return result;
     }
 
     public void printGrid(Set<Point> points, Shape s) {
@@ -218,8 +266,8 @@ public class Day17 {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        System.out.println("Starting");
         Day17 day17 = new Day17();
         day17.part1();
+        day17.part2();
     }
 }
